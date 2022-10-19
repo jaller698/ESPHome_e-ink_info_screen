@@ -223,13 +223,14 @@ sensor:
     id: duration_from_skovlunde_til_junglen
 
   - platform: homeassistant
-    entity_id: binary_sensor.switch_e_ink
-    id: time_switch
-
-  - platform: homeassistant
     entity_id: sensor.avg_indoor_temp
     id: in_avg_temp
     accuracy_decimals: 1
+
+binary_sensor:
+  - platform: homeassistant
+    entity_id: binary_sensor.switch_e_ink
+    id: time_switch
 
 text_sensor:
   - platform: homeassistant
@@ -296,13 +297,9 @@ text_sensor:
     entity_id: sensor.weatherman_data
     attribute: start_time_Junglen
     id: start_time_junglen   
-graph:
-  # Show bare-minimum auto-ranged graph
-  - id: single_temperature_graph
-    sensor: in_avg_temp
-    duration: 1h
-    width: 400
-    height: 100
+
+
+
     
 
 # Define colors
@@ -334,20 +331,21 @@ display:
     busy_pin: GPIO25
     reset_pin: GPIO26
     model: 7.50inV2
-    update_interval: 1min
+    update_interval: 5min
     auto_clear_enabled: true
-    reset_duration: 2ms
+    reset_duration: 200ms
     rotation: 90°
     id: weatherman_display
     on_page_change:
+      - display.page.show: weatherman
       
       - display.page.show: !lambda |-
-          if (time_switch) {
+          if (id(time_switch).state == true) {
             return id(int_page);
           } else {
             return id(weatherman);
           }
-          //If the switch is off, the display shows the weahterman
+          //If the switch is off, the display shows the weatherman
     pages:
     - id: int_page
       lambda: |-
