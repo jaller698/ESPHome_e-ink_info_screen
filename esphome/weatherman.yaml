@@ -1,0 +1,508 @@
+# WEATHERMAN DASHBOARD
+# For Home Assistant and ESPHome
+#
+
+
+esphome:
+  name: "weatherman"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: !secret homeassistant_psw
+wifi:
+  ssid: !secret wifi_name
+  password: !secret wifi_psw
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esphome-Web-901078"
+    password: "2JOrpBYEHQsV"
+
+# Include custom fonts
+font:
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id:  mdi_small
+    size: 31
+    glyphs: [
+      # Wifi
+      '󰤫', # mdi-wifi-strength-alert-outline
+      '󰤟', # mdi-wifi-strength-1
+      '󰤢', # mdi-wifi-strength-2
+      '󰤥', # mdi-wifi-strength-3
+      '󰤨', # mdi-wifi-strength-4
+      '󰔏', # mdi-themometer
+      '󰖎', # mdi-water-percent
+      '󰃞', # mdi-sun
+      '󰹦', # mdi-plant
+      '󱒁' # mdi-water-can
+      ]
+  - file: 'fonts/GothamRnd-Bold.ttf'
+    id: font_large_bold
+    size: 108
+    glyphs: [' ', '°', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '', '.']
+  - file: 'fonts/GothamRnd-Bold.ttf'
+    id: font_title
+    size: 64
+    glyphs: [' ', 'V','E','J','R','T', 'I', 'N', 'D','F','O']
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id:  mdi_wifi
+    size: 20
+    glyphs: [
+      # Wifi
+      '󰤫', # mdi-wifi-strength-alert-outline
+      '󰤟', # mdi-wifi-strength-1
+      '󰤢', # mdi-wifi-strength-2
+      '󰤥', # mdi-wifi-strength-3
+      '󰤨'  # mdi-wifi-strength-4
+
+      ]
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: font_mdi_large
+    size: 96
+    glyphs: &mdi-weather-glyphs
+      - "\U000F0590" # mdi-weather-cloudy
+      - "\U000F0F2F" # mdi-weather-cloudy-alert
+      - "\U000F0E6E" # mdi-weather-cloudy-arrow-right
+      - "\U000F0591" # mdi-weather-fog
+      - "\U000F0592" # mdi-weather-hail
+      - "\U000F0F30" # mdi-weather-hazy
+      - "\U000F0898" # mdi-weather-hurricane
+      - "\U000F0593" # mdi-weather-lightning
+      - "\U000F067E" # mdi-weather-lightning-rainy
+      - "\U000F0594" # mdi-weather-night
+      - "\U000F0F31" # mdi-weather-night-partly-cloudy
+      - "\U000F0595" # mdi-weather-partly-cloudy
+      - "\U000F0F32" # mdi-weather-partly-lightning
+      - "\U000F0F33" # mdi-weather-partly-rainy
+      - "\U000F0F34" # mdi-weather-partly-snowy
+      - "\U000F0F35" # mdi-weather-partly-snowy-rainy
+      - "\U000F0596" # mdi-weather-pouring
+      - "\U000F0597" # mdi-weather-rainy
+      - "\U000F0598" # mdi-weather-snowy
+      - "\U000F0F36" # mdi-weather-snowy-heavy
+      - "\U000F067F" # mdi-weather-snowy-rainy
+      - "\U000F0599" # mdi-weather-sunny
+      - "\U000F0F37" # mdi-weather-sunny-alert
+      - "\U000F14E4" # mdi-weather-sunny-off
+      - "\U000F059A" # mdi-weather-sunset
+      - "\U000F059B" # mdi-weather-sunset-down
+      - "\U000F059C" # mdi-weather-sunset-up
+      - "\U000F0F38" # mdi-weather-tornado
+      - "\U000F059D" # mdi-weather-windy
+      - "\U000F059E" # mdi-weather-windy-variant
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id:  mdi_med
+    size: 33
+    glyphs: [
+      # Wifi
+      '󰤫', # mdi-wifi-strength-alert-outline
+      '󰤟', # mdi-wifi-strength-1
+      '󰤢', # mdi-wifi-strength-2
+      '󰤥', # mdi-wifi-strength-3
+      '󰤨', # mdi-wifi-strength-4
+      '󰀦' # mdi-alert
+      ]
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: font_mdi_medium
+    size: 36
+    glyphs: *mdi-weather-glyphs
+  - file: 'fonts/GothamRnd-Book.ttf'
+    id: font_small_book
+    size: 18
+  - file: 'fonts/GothamRnd-Bold.ttf'
+    id: font_small_bold
+    size: 18
+  - file: 'fonts/GothamRnd-Bold.ttf'
+    id: font_medium_bold
+    size: 30
+    
+  - file: 'fonts/Trein-vgjA.ttf'
+    id: trains
+    size: 18
+    glyphs: ['','V',' ','a','0','1','2','6','o','m','Z','(',')']
+
+
+# Include Custom Titles
+image:
+  - file: "images/weatherman-title-train.png"
+    id: title_train
+    type: BINARY
+  - file: "images/weatherman-title-weather.png"
+    id: title_weather
+    type: BINARY
+    
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+
+sensor:
+  - platform: homeassistant
+    entity_id: sensor.netatmo_boulevarden_indoor_stuen_co2 
+    id: air_quality
+
+  - platform: homeassistant
+    entity_id: sensor.netatmo_boulevarden_indoor_stuen_temperature
+    id: temp_indoor
+  
+  - platform: homeassistant
+    entity_id: sensor.netatmo_boulevarden_indoor_stuen_humidity
+    id: humid_indoor
+  
+  - platform: homeassistant
+    entity_id: sensor.netatmo_boulevarden_indoor_co2
+    id: sovev_co2
+  
+  - platform: homeassistant
+    entity_id: sensor.netatmo_boulevarden_indoor_temperature
+    id: sovev_temp
+    
+  - platform: homeassistant
+    entity_id: sensor.netatmo_skovlunde_temperature
+    id: avg_temp
+    
+  - platform: wifi_signal
+    name: "WiFi Signal Sensor"
+    id: wifisignal
+    update_interval: 60s
+
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_temperature_now
+    id: weather_temperature_now
+
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_temperature_0
+    id: weather_temperature_0
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_temperature_1
+    id: weather_temperature_1
+
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_temperature_2
+    id: weather_temperature_2
+
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_temperature_3
+    id: weather_temperature_3
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: duration_from_skovlunde_til_carlsberg
+    id: duration_from_skovlunde_til_carlsberg
+
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: duration_from_skovlunde_til_Farum
+    id: duration_from_skovlunde_til_farum
+
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: duration_from_skovlunde_til_dtu
+    id: duration_from_skovlunde_til_dtu
+
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: duration_from_skovlunde_til_Junglen
+    id: duration_from_skovlunde_til_junglen
+
+  - platform: homeassistant
+    entity_id: binary_sensor.switch_e_ink
+    id: time_switch
+
+  - platform: homeassistant
+    entity_id: sensor.avg_indoor_temp
+    id: in_avg_temp
+    accuracy_decimals: 1
+
+text_sensor:
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_condition_now
+    id: weather_condition_now
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_condition_0
+    id: weather_condition_0
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_timestamp_0
+    id: weather_timestamp_0
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_condition_1
+    id: weather_condition_1
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_timestamp_1
+    id: weather_timestamp_1
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_condition_2
+    id: weather_condition_2
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_timestamp_2
+    id: weather_timestamp_2
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_condition_3
+    id: weather_condition_3
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: weather_timestamp_3
+    id: weather_timestamp_3
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: start_time_skovlunde
+    id: start_time_carlsberg    
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: start_time_dtu
+    id: start_time_dtu
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: start_time_Farum
+    id: start_time_farum   
+    
+  - platform: homeassistant
+    entity_id: sensor.weatherman_data
+    attribute: start_time_Junglen
+    id: start_time_junglen   
+graph:
+  # Show bare-minimum auto-ranged graph
+  - id: single_temperature_graph
+    sensor: in_avg_temp
+    duration: 1h
+    width: 400
+    height: 100
+    
+
+# Define colors
+# This design is white on black so this is necessary.
+color:
+  - id: color_black
+    red: 0%
+    green: 0%
+    blue: 0%
+    white: 100%
+  - id: color_white
+    red: 0%
+    green: 0%
+    blue: 0%
+    white: 0%
+
+
+
+# Pins for Waveshare ePaper ESP Board
+spi:
+  clk_pin: GPIO13
+  mosi_pin: GPIO14
+
+# Now render everything on the ePaper screen.
+display:
+  - platform: waveshare_epaper
+    cs_pin: GPIO15
+    dc_pin: GPIO27
+    busy_pin: GPIO25
+    reset_pin: GPIO26
+    model: 7.50inV2
+    update_interval: 1min
+    auto_clear_enabled: true
+    reset_duration: 2ms
+    rotation: 90°
+    id: weatherman_display
+    on_page_change:
+      #- display.page.show: weatherman
+      
+      - display.page.show: !lambda |-
+          if (time_switch) {
+            return id(int_page);
+          } else {
+            return id(weatherman);
+          }
+          //If the switch is off, the display shows the weahterman
+    pages:
+    - id: int_page
+      lambda: |-
+        
+          it.fill(color_black);
+
+          it.printf(250, 88, id(font_title), color_white, TextAlign::TOP_CENTER, "%s","INDENFOR");
+          it.printf(250, 158, id(font_large_bold), color_white, TextAlign::TOP_CENTER, "%.1f°C", id(in_avg_temp).state);
+
+          it.strftime(300, 742 , id(font_small_book),color_white, TextAlign::BASELINE_RIGHT , "Updated at %d/%b/%Y %H:%M", id(homeassistant_time).now());
+
+          /* WiFi Signal styrke */
+          if(id(wifisignal).has_state()) {
+            int x = 460;
+            int y = 760;
+            if (id(wifisignal).state >= -50) {
+                //Excellent
+                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤨");
+                ESP_LOGI("WiFi", "Exellent");
+            } else if (id(wifisignal).state  >= -60) {
+                //Good
+                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤥");
+                ESP_LOGI("WiFi", "Good");
+            } else if (id(wifisignal).state  >= -75) {
+                //Fair
+                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤢");
+                ESP_LOGI("WiFi", "Fair");
+            } else if (id(wifisignal).state  >= -100) {
+                //Weak
+                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤟");
+                ESP_LOGI("WiFi", "Weak");
+            } else {
+                //Unlikely working signal
+                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤫");
+                ESP_LOGI("WiFi", "Unlikely");
+            }
+          }
+        
+    - id: weatherman
+      lambda: |-
+        // Map weather states to MDI characters.
+        std::map<std::string, std::string> weather_icon_map
+            {
+              {"cloudy", "\U000F0590"},
+              {"cloudy-alert", "\U000F0F2F"},
+              {"cloudy-arrow-right", "\U000F0E6E"},
+              {"fog", "\U000F0591"},
+              {"hail", "\U000F0592"},
+              {"hazy", "\U000F0F30"},
+              {"hurricane", "\U000F0898"},
+              {"lightning", "\U000F0593"},
+              {"lightning-rainy", "\U000F067E"},
+              {"night", "\U000F0594"},
+              {"night-partly-cloudy", "\U000F0F31"},
+              {"partlycloudy", "\U000F0595"},
+              {"partly-lightning", "\U000F0F32"},
+              {"partly-rainy", "\U000F0F33"},
+              {"partly-snowy", "\U000F0F34"},
+              {"partly-snowy-rainy", "\U000F0F35"},
+              {"pouring", "\U000F0596"},
+              {"rainy", "\U000F0597"},
+              {"snowy", "\U000F0598"},
+              {"snowy-heavy", "\U000F0F36"},
+              {"snowy-rainy", "\U000F067F"},
+              {"sunny", "\U000F0599"},
+              {"sunny-alert", "\U000F0F37"},
+              {"sunny-off", "\U000F14E4"},
+              {"sunset", "\U000F059A"},
+              {"sunset-down", "\U000F059B"},
+              {"sunset-up", "\U000F059C"},
+              {"tornado", "\U000F0F38"},
+              {"windy", "\U000F059D"},
+              {"windy-variant", "\U000F059E"},
+              //til når der ikke er noget billede
+              {"", "\U000F0F30"},
+              {"nan", "\U000F0F38"},
+
+            };
+      
+
+          // Fill background in black.
+          it.fill(color_black);
+      
+      
+          it.printf(250, 88, id(font_title), color_white, TextAlign::TOP_CENTER, "%s","VEJRET");
+      
+
+          it.printf(100, 158, id(font_mdi_large), color_white, TextAlign::TOP_CENTER, "%s", weather_icon_map[id(weather_condition_now).state.c_str()].c_str());
+          it.printf(300, 158, id(font_large_bold), color_white, TextAlign::TOP_CENTER, "%2.0f°C", id(avg_temp).state);
+      
+          it.printf(70, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "I dag");
+          it.printf(70, 306, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "%s", weather_icon_map[id(weather_condition_now).state.c_str()].c_str());
+          it.printf(70, 354, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f°C", id(weather_temperature_now).state);
+      
+          it.printf(160, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "I morgen");
+          it.printf(160, 306, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "%s", weather_icon_map[id(weather_condition_0).state.c_str()].c_str());
+          it.printf(160, 354, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f°C", id(weather_temperature_0).state);
+      
+          it.printf(250, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(weather_timestamp_1).state.c_str());
+          it.printf(250, 306, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "%s", weather_icon_map[id(weather_condition_1).state.c_str()].c_str());
+          it.printf(250, 354, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f°C", id(weather_temperature_1).state);
+      
+          it.printf(340, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(weather_timestamp_2).state.c_str());
+          it.printf(340, 306, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "%s", weather_icon_map[id(weather_condition_2).state.c_str()].c_str());
+          it.printf(340, 354, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f°C", id(weather_temperature_2).state);
+      
+          it.printf(430, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(weather_timestamp_3).state.c_str());
+          it.printf(430, 306, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "%s", weather_icon_map[id(weather_condition_3).state.c_str()].c_str());
+          it.printf(430, 354, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f°C", id(weather_temperature_3).state);
+      
+          it.strftime(300, 742 , id(font_small_book),color_white, TextAlign::BASELINE_RIGHT , "Updated at %d/%b/%Y %H:%M", id(homeassistant_time).now());
+      
+          //adskil
+          it.printf(250, 500, id(trains), color_white, TextAlign::TOP_CENTER, "   (  a060oQV2m02ZZZ  )   " );
+          // Train Service Section
+          it.printf(150, 536, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL DTU");
+          it.printf(330, 536, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL CARLSBERG");
+          it.printf(150, 556, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_dtu).state );
+          it.printf(330, 556, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_carlsberg).state );
+          it.printf(150, 588, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_dtu).state.c_str() );
+          it.printf(330, 588, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_carlsberg).state.c_str());
+
+          it.printf(150, 632, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL AASTED");
+          it.printf(330, 632, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL JUNGLEN");
+          it.printf(150, 652, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_farum).state );
+          it.printf(330, 652, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_junglen).state );
+          it.printf(150, 684, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_farum).state.c_str());
+          it.printf(330, 684, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_junglen).state.c_str());
+      
+      
+          /* WiFi Signal styrke */
+          if(id(wifisignal).has_state()) {
+            int x = 460;
+            int y = 760;
+            if (id(wifisignal).state >= -50) {
+                //Excellent
+                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤨");
+                ESP_LOGI("WiFi", "Exellent");
+            } else if (id(wifisignal).state  >= -60) {
+                //Good
+                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤥");
+                ESP_LOGI("WiFi", "Good");
+            } else if (id(wifisignal).state  >= -75) {
+                //Fair
+                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤢");
+                ESP_LOGI("WiFi", "Fair");
+            } else if (id(wifisignal).state  >= -100) {
+                //Weak
+                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤟");
+                ESP_LOGI("WiFi", "Weak");
+            } else {
+                //Unlikely working signal
+                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤫");
+                ESP_LOGI("WiFi", "Unlikely");
+            }
+          }
+

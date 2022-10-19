@@ -1,0 +1,153 @@
+template:
+
+  - trigger:
+      platform: time_pattern
+      minutes: "/1"
+    sensor:
+      - name: avg_indoor_temp
+        unit_of_measurement: "°C"
+        state: >
+          {% set bedroom = states('sensor.netatmo_boulevarden_indoor_temperature') | float %}
+          {% set living_room = states('sensor.netatmo_boulevarden_indoor_stuen_temperature') | float %}
+            
+          {{ ((bedroom + living_room) / 2) | round(1, default=0) }}
+          
+      - name: Weatherman Data
+        state: "OK"
+        attributes:
+          duration_from_skovlunde_til_carlsberg: >
+              {%if 20 < now().hour < 7 %}
+                {% set start_time = state_attr('sensor.skovCarl', 'Trip')[1]['Leg'][0]['Origin']['time'] | replace(":",".") | float %}
+                {% set end_time = state_attr('sensor.skovCarl', 'Trip')[1]['Leg'][(-1)]['Destination']['time'] | replace(":",".") | float%}
+              {% else %}
+                {% set start_time = state_attr('sensor.skovCarl', 'Trip')[0]['Leg'][0]['Origin']['time'] | replace(":",".") | float %}
+                {% set end_time = state_attr('sensor.skovCarl', 'Trip')[0]['Leg'][(-1)]['Destination']['time'] | replace(":",".") | float%}
+              {%endif%}
+              {% set start_time1 = start_time | int%}
+              {% set end_time1 = end_time | int%}
+              {% set duration = -(start_time1*60+(start_time-start_time1)*100)+(end_time1*60+(end_time-end_time1)*100) %}
+              {{duration}}
+          start_time_skovlunde: >
+            {%if 20 < now().hour < 7 %}
+              {% set start_time = state_attr('sensor.skovCarl', 'Leg')[1]['Leg'][0]['Origin']['time'] %}
+            {% else %}
+              {% set start_time = state_attr('sensor.skovCarl', 'Trip')[0]['Leg'][0]['Origin']['time'] %}
+            {%endif%}
+            {{start_time}}
+          duration_from_skovlunde_til_dtu: >
+              {%if 20 < now().hour < 7 %}
+                {% set start_time = state_attr('sensor.skovDTU', 'Trip')[1]['Leg'][0]['Origin']['time'] | replace(":",".") | float %}
+                {% set end_time = state_attr('sensor.skovDTU', 'Trip')[1]['Leg'][(-1)]['Destination']['time'] | replace(":",".") | float%}
+              {% else %}
+                {% set start_time = state_attr('sensor.skovDTU', 'Trip')[0]['Leg'][0]['Origin']['time'] | replace(":",".") | float %}
+                {% set end_time = state_attr('sensor.skovDTU', 'Trip')[0]['Leg'][(-1)]['Destination']['time'] | replace(":",".") | float%}
+              {%endif%}
+              {% set start_time1 = start_time | int%}
+              {% set end_time1 = end_time | int%}
+              {% set duration = -(start_time1*60+(start_time-start_time1)*100)+(end_time1*60+(end_time-end_time1)*100) %}
+              {{duration}}
+          start_time_dtu: >
+            {%if 20 < now().hour < 7 %}
+              {% set start_time = state_attr('sensor.skovDTU', 'Leg')[1]['Leg'][0]['Origin']['time'] %}
+            {% else %}
+              {% set start_time = state_attr('sensor.skovDTU', 'Trip')[0]['Leg'][0]['Origin']['time'] %}
+            {%endif%}
+            {{start_time}}
+          duration_from_skovlunde_til_Junglen: >
+            {% set start_time = state_attr('sensor.skovJun', 'Leg')[0]['Origin']['time'] | replace(":",".") | float %}
+            {% set end_time = state_attr('sensor.skovJun', 'Leg')[(-1)]['Destination']['time'] | replace(":",".") | float%}
+            {% set start_time1 = start_time | int%}
+            {% set end_time1 = end_time | int%}
+            {% set duration = -(start_time1*60+(start_time-start_time1)*100)+(end_time1*60+(end_time-end_time1)*100) %}
+            {{duration}}
+          start_time_Junglen: >
+            {% set start_time = state_attr('sensor.skovJun', 'Leg')[0]['Origin']['time'] %}
+            {{start_time}}
+          duration_from_skovlunde_til_Farum: >
+            {% set start_time = state_attr('sensor.skovFar', 'Leg')[0]['Origin']['time'] | replace(":",".") | float %}
+            {% set end_time = state_attr('sensor.skovFar', 'Leg')[(-1)]['Destination']['time'] | replace(":",".") | float%}
+            {% set start_time1 = start_time | int%}
+            {% set end_time1 = end_time | int%}
+            {% set duration = -(start_time1*60+(start_time-start_time1)*100)+(end_time1*60+(end_time-end_time1)*100) %}
+            {{duration}}
+          start_time_Farum: >
+            {% set start_time = state_attr('sensor.skovFar', 'Leg')[0]['Origin']['time'] %}
+            {{start_time}}
+          
+          weather_condition_now: >
+            {% set cond_now = states('weather.boulevarden') %}
+            {% if states('sun.sun') == 'below_horizon' %}
+                {% if cond_now == 'sunny' %} night {% elif cond_now == 'partlycloudy' %} night-partly-cloudy {% else %} {{ cond_now }} {% endif %}
+            {% else %}
+                {{ cond_now }}
+            {% endif %}
+            
+          weather_temperature_now: >
+            {% set condnow_0 = state_attr('weather.hourly', 'forecast')[0].temperature %}
+            {% set condnow_3 = state_attr('weather.hourly', 'forecast')[3].temperature %}
+            {% set condnow_6 = state_attr('weather.hourly', 'forecast')[6].temperature %}
+            {% set condnow_9 = state_attr('weather.hourly', 'forecast')[9].temperature %}
+            {% set condnow = (condnow_0+condnow_3+condnow_6+condnow_9)/4 %}
+            {{ condnow | round }}
+                        
+          weather_condition_0: >
+            {% set cond0 = state_attr('weather.boulevarden', 'forecast')[0].condition %}
+            {% set next_setting = as_timestamp(state_attr('sun.sun', 'next_setting')) %}
+            {% set next_rising = as_timestamp(state_attr('sun.sun', 'next_rising')) %}
+            {% set cond0_time = as_timestamp(state_attr('weather.boulevarden', 'forecast')[0].datetime) %}
+            {% if cond0_time > next_setting and cond0_time < next_rising %}
+                {% if cond0 == 'sunny' %} night {% elif cond0 == 'partlycloudy' %} night-partly-cloudy {% else %} {{ cond0 }} {% endif %}
+            {% else %}
+                {{ cond0 }}
+            {% endif %}
+          weather_temperature_0: >
+            {{ state_attr('weather.boulevarden', 'forecast')[0].temperature | round }}
+          weather_timestamp_0: >
+            {{ as_timestamp(state_attr('weather.boulevarden', 'forecast')[0].datetime) | timestamp_custom('%a')}} 
+            
+          weather_condition_1: >
+            {% set cond1 = state_attr('weather.boulevarden', 'forecast')[1].condition %}
+            {% set next_setting = as_timestamp(state_attr('sun.sun', 'next_setting')) %}
+            {% set next_rising = as_timestamp(state_attr('sun.sun', 'next_rising')) %}
+            {% set cond1_time = as_timestamp(state_attr('weather.boulevarden', 'forecast')[1].datetime) %}
+            {% if cond1_time > next_setting and cond1_time < next_rising %}
+                {% if cond1 == 'sunny' %} night {% elif cond1 == 'partlycloudy' %} night-partly-cloudy {% else %} {{ cond1 }} {% endif %}
+            {% else %}
+                {{ cond1 }}
+            {% endif %}
+          weather_temperature_1: >
+            {{ state_attr('weather.boulevarden', 'forecast')[1].temperature | round }}
+          weather_timestamp_1: >
+            {{ as_timestamp(state_attr('weather.boulevarden', 'forecast')[1].datetime) | timestamp_custom('%a') }} 
+            
+          weather_condition_2: >
+            {% set cond2 = state_attr('weather.boulevarden', 'forecast')[2].condition %}
+            {% set next_setting = as_timestamp(state_attr('sun.sun', 'next_setting')) %}
+            {% set next_rising = as_timestamp(state_attr('sun.sun', 'next_rising')) %}
+            {% set cond2_time = as_timestamp(state_attr('weather.boulevarden', 'forecast')[2].datetime) %}
+            {% if cond2_time > next_setting and cond2_time < next_rising %}
+                {% if cond2 == 'sunny' %} night {% elif cond2 == 'partlycloudy' %} night-partly-cloudy {% else %} {{ cond2 }} {% endif %}
+            {% else %}
+                {{ cond2 }}
+            {% endif %}
+          weather_temperature_2: >
+            {{ state_attr('weather.boulevarden', 'forecast')[2].temperature | round }}
+          weather_timestamp_2: >
+            {{ as_timestamp(state_attr('weather.boulevarden', 'forecast')[2].datetime) | timestamp_custom('%a') }} 
+            
+          weather_condition_3: >
+            {% set cond3 = state_attr('weather.boulevarden', 'forecast')[3].condition %}
+            {% set next_setting = as_timestamp(state_attr('sun.sun', 'next_setting')) %}
+            {% set next_rising = as_timestamp(state_attr('sun.sun', 'next_rising')) %}
+            {% set cond3_time = as_timestamp(state_attr('weather.boulevarden', 'forecast')[3].datetime) %}
+            {% if cond3_time > next_setting and cond3_time < next_rising %}
+                {% if cond3 == 'sunny' %} night {% elif cond3 == 'partlycloudy' %} night-partly-cloudy {% else %} {{ cond3 }} {% endif %}
+            {% else %}
+                {{ cond3 }}
+            {% endif %}
+          weather_temperature_3: >
+            {{ state_attr('weather.boulevarden', 'forecast')[3].temperature | round }}
+          weather_timestamp_3: >
+            {{ as_timestamp(state_attr('weather.boulevarden', 'forecast')[3].datetime) | timestamp_custom('%a')}}
+            
+          

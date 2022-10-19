@@ -1,0 +1,31 @@
+  - platform: rest
+    resource: !secret skovCarl
+    name: "skovCarl"
+    value_template: "OK"
+    json_attributes_path: "$.TripList"
+    json_attributes:
+      - Trip
+  - platform: rest
+    resource: !secret skovDTU
+    name: "skovDTU"
+    value_template: "OK"
+    json_attributes_path: "$.TripList"
+    json_attributes:
+      - Trip
+  - platform: rest
+    resource: !secret skovJun
+    name: "skovJun"
+    value_template: "OK"
+    json_attributes_path: "$.TripList.Trip[0]"
+    json_attributes:
+      - Leg
+  - platform: rest
+    resource: !secret skovFar
+    name: "skovFar"
+    value_template: "OK"
+    json_attributes_path: "$.TripList.Trip[0]"
+    json_attributes:
+      - Leg
+
+        
+
