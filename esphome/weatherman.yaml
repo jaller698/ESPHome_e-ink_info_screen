@@ -340,7 +340,6 @@ display:
     rotation: 90°
     id: weatherman_display
     on_page_change:
-      #- display.page.show: weatherman
       
       - display.page.show: !lambda |-
           if (time_switch) {
