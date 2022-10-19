@@ -20,7 +20,7 @@ No soldering needed.
 6. Flash the "Weatherman.yaml" file to your driver board, using ESPHome. 
 
 
-##Data sources
+## Data sources
 
 If you followed the guide, you should now have a functioning E-ink display. But you'll need to modify the template sensor in the inclouded configuartion field, to incloude your own sensors. Furthermore, if you wish to make use of the Rejseplan API (Danish public transport), you'll need to contact Rejseplanen [Labs](https://help.rejseplanen.dk/hc/da/requests/new). Alternatively you can make use of the [Goodservice API](https://www.goodservice.io/api/stops/<stop_id>). Some further tinkering might be needed then. 
 
