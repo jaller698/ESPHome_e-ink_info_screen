@@ -1,7 +1,6 @@
-# WEATHERMAN DASHBOARD
+# weatherman DASHBOARD
 # For Home Assistant and ESPHome
 #
-
 
 esphome:
   name: "weatherman"
@@ -16,6 +15,7 @@ logger:
 
 # Enable Home Assistant API
 api:
+
 
 ota:
   password: !secret homeassistant_psw
@@ -53,7 +53,6 @@ font:
   - file: 'fonts/GothamRnd-Bold.ttf'
     id: font_title
     size: 64
-    glyphs: [' ', 'V','E','J','R','T', 'I', 'N', 'D','F','O']
   - file: 'fonts/materialdesignicons-webfont.ttf'
     id:  mdi_wifi
     size: 20
@@ -100,6 +99,9 @@ font:
       - "\U000F0F38" # mdi-weather-tornado
       - "\U000F059D" # mdi-weather-windy
       - "\U000F059E" # mdi-weather-windy-variant
+      - "\U000F0FD1" # mdi-bedroom
+      - "\U000F156D" # mdi-livingroom
+      - "\U000F140B" # mdi-power-icon
   - file: 'fonts/materialdesignicons-webfont.ttf'
     id:  mdi_med
     size: 33
@@ -129,18 +131,8 @@ font:
   - file: 'fonts/Trein-vgjA.ttf'
     id: trains
     size: 18
-    glyphs: ['','V',' ','a','0','1','2','6','o','m','Z','(',')']
-
-
-# Include Custom Titles
-image:
-  - file: "images/weatherman-title-train.png"
-    id: title_train
-    type: BINARY
-  - file: "images/weatherman-title-weather.png"
-    id: title_weather
-    type: BINARY
-    
+    glyphs: ['','V',' ','a','0','1','2','6','o','m','Z','(',')','Q']
+   
 
 time:
   - platform: homeassistant
@@ -219,17 +211,22 @@ sensor:
 
   - platform: homeassistant
     entity_id: sensor.weatherman_data
-    attribute: duration_from_skovlunde_til_Junglen
+    attribute: duration_from_skovlunde_til_Sodal
     id: duration_from_skovlunde_til_junglen
-
-  - platform: homeassistant
-    entity_id: binary_sensor.switch_e_ink
-    id: time_switch
 
   - platform: homeassistant
     entity_id: sensor.avg_indoor_temp
     id: in_avg_temp
     accuracy_decimals: 1
+
+  - platform: homeassistant
+    entity_id: sensor.energi_data_service
+    id: energy_price
+    accuracy_decimals: 3
+binary_sensor:
+  - platform: homeassistant
+    entity_id: schedule.switch_e_ink
+    id: time_switch
 
 text_sensor:
   - platform: homeassistant
@@ -294,15 +291,11 @@ text_sensor:
     
   - platform: homeassistant
     entity_id: sensor.weatherman_data
-    attribute: start_time_Junglen
+    attribute: start_time_Sodal
     id: start_time_junglen   
-graph:
-  # Show bare-minimum auto-ranged graph
-  - id: single_temperature_graph
-    sensor: in_avg_temp
-    duration: 1h
-    width: 400
-    height: 100
+
+
+
     
 
 # Define colors
@@ -334,63 +327,15 @@ display:
     busy_pin: GPIO25
     reset_pin: GPIO26
     model: 7.50inV2
-    update_interval: 1min
+    update_interval: 2min
     auto_clear_enabled: true
-    reset_duration: 2ms
+    reset_duration: 200ms
     rotation: 90°
-    id: weatherman_display
-    on_page_change:
-      #- display.page.show: weatherman
-      
-      - display.page.show: !lambda |-
-          if (time_switch) {
-            return id(int_page);
-          } else {
-            return id(weatherman);
-          }
-          //If the switch is off, the display shows the weahterman
     pages:
-    - id: int_page
-      lambda: |-
-        
-          it.fill(color_black);
-
-          it.printf(250, 88, id(font_title), color_white, TextAlign::TOP_CENTER, "%s","INDENFOR");
-          it.printf(250, 158, id(font_large_bold), color_white, TextAlign::TOP_CENTER, "%.1f°C", id(in_avg_temp).state);
-
-          it.strftime(300, 742 , id(font_small_book),color_white, TextAlign::BASELINE_RIGHT , "Updated at %d/%b/%Y %H:%M", id(homeassistant_time).now());
-
-          /* WiFi Signal styrke */
-          if(id(wifisignal).has_state()) {
-            int x = 460;
-            int y = 760;
-            if (id(wifisignal).state >= -50) {
-                //Excellent
-                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤨");
-                ESP_LOGI("WiFi", "Exellent");
-            } else if (id(wifisignal).state  >= -60) {
-                //Good
-                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤥");
-                ESP_LOGI("WiFi", "Good");
-            } else if (id(wifisignal).state  >= -75) {
-                //Fair
-                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤢");
-                ESP_LOGI("WiFi", "Fair");
-            } else if (id(wifisignal).state  >= -100) {
-                //Weak
-                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤟");
-                ESP_LOGI("WiFi", "Weak");
-            } else {
-                //Unlikely working signal
-                it.print(x, y, id(mdi_wifi), color_white, TextAlign::BASELINE_CENTER, "󰤫");
-                ESP_LOGI("WiFi", "Unlikely");
-            }
-          }
-        
-    - id: weatherman
-      lambda: |-
-        // Map weather states to MDI characters.
-        std::map<std::string, std::string> weather_icon_map
+      - id: weatherman
+        lambda: |-
+          // Map weather states to MDI characters.
+          std::map<std::string, std::string> weather_icon_map
             {
               {"cloudy", "\U000F0590"},
               {"cloudy-alert", "\U000F0F2F"},
@@ -427,11 +372,20 @@ display:
               {"nan", "\U000F0F38"},
 
             };
+            std::map<std::string, std::string> day_convert
+            {
+              {"Mon", "Man"},
+              {"Tue", "Tirs"},
+              {"Wed", "Ons"},
+              {"Thu", "Tors"},
+              {"Fri", "Fre"},
+              {"Sat", "Lor"},
+              {"Sun", "Son"},
+            };
       
 
           // Fill background in black.
           it.fill(color_black);
-      
       
           it.printf(250, 88, id(font_title), color_white, TextAlign::TOP_CENTER, "%s","VEJRET");
       
@@ -447,37 +401,57 @@ display:
           it.printf(160, 306, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "%s", weather_icon_map[id(weather_condition_0).state.c_str()].c_str());
           it.printf(160, 354, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f°C", id(weather_temperature_0).state);
       
-          it.printf(250, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(weather_timestamp_1).state.c_str());
+          it.printf(250, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", day_convert[id(weather_timestamp_1).state.c_str()].c_str());
           it.printf(250, 306, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "%s", weather_icon_map[id(weather_condition_1).state.c_str()].c_str());
           it.printf(250, 354, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f°C", id(weather_temperature_1).state);
       
-          it.printf(340, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(weather_timestamp_2).state.c_str());
+          it.printf(340, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", day_convert[id(weather_timestamp_2).state.c_str()].c_str());
           it.printf(340, 306, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "%s", weather_icon_map[id(weather_condition_2).state.c_str()].c_str());
           it.printf(340, 354, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f°C", id(weather_temperature_2).state);
       
-          it.printf(430, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(weather_timestamp_3).state.c_str());
+          it.printf(430, 282, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", day_convert[id(weather_timestamp_3).state.c_str()].c_str());
           it.printf(430, 306, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "%s", weather_icon_map[id(weather_condition_3).state.c_str()].c_str());
           it.printf(430, 354, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f°C", id(weather_temperature_3).state);
       
           it.strftime(300, 742 , id(font_small_book),color_white, TextAlign::BASELINE_RIGHT , "Updated at %d/%b/%Y %H:%M", id(homeassistant_time).now());
-      
-          //adskil
-          it.printf(250, 500, id(trains), color_white, TextAlign::TOP_CENTER, "   (  a060oQV2m02ZZZ  )   " );
-          // Train Service Section
-          it.printf(150, 536, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL DTU");
-          it.printf(330, 536, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL CARLSBERG");
-          it.printf(150, 556, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_dtu).state );
-          it.printf(330, 556, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_carlsberg).state );
-          it.printf(150, 588, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_dtu).state.c_str() );
-          it.printf(330, 588, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_carlsberg).state.c_str());
 
-          it.printf(150, 632, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL AASTED");
-          it.printf(330, 632, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL JUNGLEN");
-          it.printf(150, 652, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_farum).state );
-          it.printf(330, 652, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_junglen).state );
-          it.printf(150, 684, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_farum).state.c_str());
-          it.printf(330, 684, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_junglen).state.c_str());
-      
+          if(id(time_switch).state == 1){
+            //divide the screen
+            it.printf(250, 500, id(trains), color_white, TextAlign::TOP_CENTER, "   (  a060oQV2m02ZZZ  )   " );
+            // Train Service Section
+            it.printf(150, 536, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL DTU");
+            it.printf(330, 536, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL CARLSBERG");
+            it.printf(150, 556, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_dtu).state );
+            it.printf(330, 556, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_carlsberg).state );
+            it.printf(150, 588, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_dtu).state.c_str() );
+            it.printf(330, 588, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_carlsberg).state.c_str());
+
+            it.printf(150, 632, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL AASTED");
+            it.printf(330, 632, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "TIL SODAL");
+            it.printf(150, 652, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_farum).state );
+            it.printf(330, 652, id(font_medium_bold), color_white, TextAlign::TOP_CENTER, "%2.0f MIN", id(duration_from_skovlunde_til_junglen).state );
+            it.printf(150, 684, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_farum).state.c_str());
+            it.printf(330, 684, id(font_small_book), color_white, TextAlign::TOP_CENTER, "%s", id(start_time_junglen).state.c_str());
+          } else if (id(time_switch).state == 0){
+            //it.printf(250, 560, id(font_title), color_white, TextAlign::TOP_CENTER, "%s","INDENFOR");
+
+            it.printf(150, 500, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "\U000F156D"); //livingroom
+            it.printf(150, 540, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%0.1f °C", id(temp_indoor).state );
+            it.printf(150, 570, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f ppm", id(air_quality).state );
+
+
+            it.printf(330, 500, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "\U000F0FD1"); //bedroom
+            it.printf(330, 540, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%0.1f °C", id(sovev_temp).state );
+            it.printf(330, 570, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%2.0f ppm", id(sovev_co2).state );
+
+            it.printf(150, 630, id(font_mdi_medium), color_white, TextAlign::TOP_CENTER, "\U000F140B");
+            it.printf(150, 670, id(font_small_bold), color_white, TextAlign::TOP_CENTER, "%0.2f kr.",id(energy_price).state);
+
+
+
+            
+            
+          }      
       
           /* WiFi Signal styrke */
           if(id(wifisignal).has_state()) {
@@ -505,4 +479,5 @@ display:
                 ESP_LOGI("WiFi", "Unlikely");
             }
           }
+        
 
